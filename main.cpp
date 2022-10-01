@@ -31,5 +31,6 @@ int main()
     FredholmSolver solver(msh);
     solver.assembleGlobalSystem();
     solver.solveGlobalSystem();
+    solver.printToMV2();
 }
 

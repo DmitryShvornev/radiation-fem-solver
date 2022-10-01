@@ -35,14 +35,14 @@ std::vector<std::vector<double>> FredholmSolver::createLocalMatrix(Element p_ele
     {
         for (size_t j = 0; j < 3; j++)
         {
-            M[i][j] = (1 - EPSILON) * weight - (1 / 12) * square;
+            M[i][j] = (square / 12) - (1 - EPSILON) * weight;
         }
     }
     return M;
 }
 
 std::vector<double> FredholmSolver::createLocalVector(Element p_element) {
-    double element = (1 / 3) * SIGMA_0 * EPSILON * pow(THETA, 4) * p_element.getSquare();
+    double element = SIGMA_0 * EPSILON * pow(THETA, 4) * p_element.getSquare() / 3;
     std::vector<double> res({ element, element, element });
     return res;
 }
@@ -76,12 +76,89 @@ void FredholmSolver::assembleGlobalSystem() {
     global_matrix = G;
 }
 
-void FredholmSolver::solveGlobalSystem() {
-    for (auto& row : global_matrix) {
-        for (auto& col : row) {
-            std::cout << col << " ";
+double FredholmSolver::scalarProduction(std::vector<double> left, std::vector<double> right) {
+    double res = 0;
+    if (left.size() == right.size()) {
+        int size = left.size();
+        for (int i = 0; i < size; i++)
+        {
+            res += left[i] * right[i];
         }
     }
+    return res;
+}
+
+std::vector<double> FredholmSolver::vectorAdd(std::vector<double> left, std::vector<double> right) {
+    std::vector<double> res;
+    if (left.size() == right.size()) {
+        int size = left.size();
+        for (int i = 0; i < size; i++)
+        {
+            res.push_back(left[i] + right[i]);
+        }
+    }
+    return res;
+}
+
+std::vector<double> FredholmSolver::vectorSubtract(std::vector<double> left, std::vector<double> right) {
+    std::vector<double> res;
+    if (left.size() == right.size()) {
+        int size = left.size();
+        for (int i = 0; i < size; i++)
+        {
+            res.push_back(left[i] - right[i]);
+        }
+    }
+    return res;
+}
+
+std::vector<double> FredholmSolver::vectorNumberProduction(double num, std::vector<double> op) {
+    for (auto& el : op)
+    {
+        el *= num;
+    } 
+    return op;
+}
+
+std::vector<double> FredholmSolver::matrixVectorProduction(std::vector<std::vector<double>> mat, std::vector<double> vec) {
+    const int SIZE = vec.size();
+    std::vector<double> res(SIZE);
+    std::fill(res.begin(), res.end(), 0);
+    for (int i = 0; i < SIZE; i++)
+    {
+        for (int j = 0; j < SIZE; j++)
+        {
+            res[i] += mat[i][j] * vec[j];
+        }
+    }
+    return res;
+}
+
+void FredholmSolver::solveGlobalSystem() {
+    const double EPS = 1e-5;
+    const int SIZE = global_vector.size();
+    std::vector<double> x(SIZE);
+    std::fill(x.begin(), x.end(), 0);
+    std::vector<double> r = global_vector;
+    std::vector<double> p = r;
+    double rSquare = scalarProduction(r, r);
+    int numIter = 0;
+    while (rSquare > EPS)
+    {
+        numIter++;
+        std::vector<double> temp = matrixVectorProduction(global_matrix, p);
+        double alpha = rSquare / scalarProduction(temp, p);
+        x = vectorAdd(x, vectorNumberProduction(alpha, p));
+
+        std::vector<double> rNew = vectorSubtract(r, vectorNumberProduction(alpha, temp));
+        double rNewSquare = scalarProduction(rNew, rNew);
+        double beta = rNewSquare / rSquare;
+        r = rNew;
+        rSquare = rNewSquare;
+        p = vectorAdd(r, vectorNumberProduction(beta,p));
+    }
+    std::cout << "Number of iterations: " << numIter << std::endl;
+    solution = x;
 }
 
 void FredholmSolver::printToMV2() {

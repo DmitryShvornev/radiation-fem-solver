@@ -13,6 +13,7 @@ public:
 	Point3D& operator-(const Point3D& p_point);
 	double operator*(const Point3D& p_point);
 	double getDistance(const Point3D& p_point);
+	friend std::ostream& operator<<(std::ostream&, const Point3D&);
 	~Point3D() {};
 };
 

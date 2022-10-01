@@ -42,6 +42,7 @@ Mesh MeshAdapter::adaptMesh() {
 		k_node.globalID = k_node_tag;
 		Element element = Element(i_node, j_node, k_node);
 		element.setGlobalIDs(i_node_tag, j_node_tag, k_node_tag);
+		//std::cout << element.getCenter() << std::endl;
 		mesh_elements.push_back(element);
 	}
 	Mesh mesh(mesh_nodes, mesh_elements);

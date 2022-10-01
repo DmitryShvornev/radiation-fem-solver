@@ -27,6 +27,11 @@ double Point3D::getDistance(const Point3D& p_point) {
 	return result;
 }
 
+std::ostream& operator << (std::ostream& out_stream, const Point3D& point) {
+	out_stream << "[" << point.x << " " << point.y << " " << point.z << "]";
+	return out_stream;
+}
+
 Node::Node(double p_x, double p_y, double p_z) : x(p_x), y(p_y), z(p_z), globalID(0) {};
 
 
