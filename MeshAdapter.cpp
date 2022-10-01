@@ -35,11 +35,11 @@ Mesh MeshAdapter::adaptMesh() {
 		std::size_t k_node_tag = result_elements_tags[i];
 
 		Node i_node = mesh_nodes[i_node_tag];
-		i_node.setGlobalID(i_node_tag);
+		i_node.globalID = i_node_tag;
 		Node j_node = mesh_nodes[j_node_tag];
-		j_node.setGlobalID(j_node_tag);
+		j_node.globalID = j_node_tag;
 		Node k_node = mesh_nodes[k_node_tag];
-		k_node.setGlobalID(k_node_tag);
+		k_node.globalID = k_node_tag;
 		Element element = Element(i_node, j_node, k_node);
 		element.setGlobalIDs(i_node_tag, j_node_tag, k_node_tag);
 		mesh_elements.push_back(element);

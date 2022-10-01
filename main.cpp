@@ -25,16 +25,11 @@ int main()
     std::vector<std::vector<std::size_t>> node_tags;
     gmsh::model::mesh::getElements(element_types, element_tags, node_tags);
 
-   
-    FredholmSolver fr(coords);
     gmsh::finalize();
     MeshAdapter adapter(coords, tags, node_tags);
-    adapter.adaptMesh();
-    //std::vector<Node> nodes = fr.getNodes();
-    /*std::for_each(node_tags.begin(), node_tags.end(), [](std::vector<std::size_t> elem) {
-        std::for_each(elem.begin(), elem.end(), [](std::size_t x) {
-            std::cout << x << " ";
-            });*/
-    
+    Mesh msh = adapter.adaptMesh();
+    FredholmSolver solver(msh);
+    solver.assembleGlobalSystem();
+    solver.solveGlobalSystem();
 }
 
