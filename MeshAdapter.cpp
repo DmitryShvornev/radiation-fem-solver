@@ -9,6 +9,7 @@ MeshAdapter::MeshAdapter(const std::vector<double> p_coords, const std::vector<s
 };
 
 Mesh MeshAdapter::adaptMesh() {
+	std::cout << "Mesh preprocessing..." << std::endl;
 	std::size_t nodes_number = nodes_tags.size();
 	std::vector<std::size_t> new_nodes_tags(nodes_number);
 	std::iota(new_nodes_tags.begin(), new_nodes_tags.end(), 0);
@@ -35,14 +36,13 @@ Mesh MeshAdapter::adaptMesh() {
 		std::size_t k_node_tag = result_elements_tags[i];
 
 		Node i_node = mesh_nodes[i_node_tag];
-		i_node.globalID = i_node_tag;
+		i_node.setGlobalID(i_node_tag);
 		Node j_node = mesh_nodes[j_node_tag];
-		j_node.globalID = j_node_tag;
+		j_node.setGlobalID(j_node_tag);
 		Node k_node = mesh_nodes[k_node_tag];
-		k_node.globalID = k_node_tag;
+		k_node.setGlobalID(k_node_tag);
 		Element element = Element(i_node, j_node, k_node);
 		element.setGlobalIDs(i_node_tag, j_node_tag, k_node_tag);
-		//std::cout << element.getCenter() << std::endl;
 		mesh_elements.push_back(element);
 	}
 	Mesh mesh(mesh_nodes, mesh_elements);

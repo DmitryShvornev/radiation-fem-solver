@@ -1,4 +1,5 @@
 #include "FredholmSolver.h"
+#include <cmath>
 // постоянная Стефана - Больцмана
 double SIGMA_0 = 5.67 * pow(10, -8);
 
@@ -10,57 +11,76 @@ double THETA = 573;
 
 double pi = 3.14159265358979323846;
 
+
+double theta(double x, double y) {
+    return 476.72*cos(atan(y / x) / 2.29);
+}
+
 FredholmSolver::FredholmSolver(const Mesh p_mesh) {
     mesh = p_mesh;
 }
 
-std::vector<std::vector<double>> FredholmSolver::createLocalMatrix(Element p_element) {
-    Point3D center = p_element.getCenter();
+matrix<double> FredholmSolver::createLocalMatrix(Element p_element) {
+    matrix<double> M = zero_matrix<double>(3, 3);
+    matrix<double> E = identity_matrix<double>(3, 3);
     double square = p_element.getSquare();
-    double weight = 0;
+    Point3D n_M = p_element.getNormal(); 
+    std::vector<Node> current_nodes({ p_element.iNode(), p_element.jNode(), p_element.kNode()});
     std::for_each(mesh.elements.begin(), mesh.elements.end(), [&](Element element) {
-        if (element != p_element) {
+        if (!(element == p_element)) {
             Point3D target_center = element.getCenter();
+            std::vector<Node> target_nodes({ element.iNode(), element.jNode(), element.kNode()});
             double target_square = element.getSquare();
-            Point3D r = target_center - center;
-            double k_N = r * target_center;
-            double k_M = r * center;
-            double distance = target_center.getDistance(center);
-            weight += k_M * k_N * target_square / (distance * distance);
+            Point3D n_N = element.getNormal();
+            int j = 0;
+#pragma omp parallel for private(j)
+            for (int i = 0; i < 3; i++)
+            {
+                for (j = 0; j < 3; j++)
+                {
+                    Node temp = current_nodes[i] - target_nodes[j];
+                    Point3D r_MN(temp.x(), temp.y(), temp.z());
+                    double C_1 = target_square / (r_MN * r_MN);
+                    double C_2 = (r_MN * n_N);
+                    double C_3 = (square / (12 * pi)) * (1 - EPSILON);
+                    double C_4 = (r_MN * n_M);
+                    if (C_4 == 0 || C_2 == 0) {
+                        continue;
+                    }
+                    else {
+                        M(i, j) += C_1 * C_2 * C_3 * C_4;
+                    }
+                }
+            }
+            
         }
     });
-    weight *= square / (12 * pi);
-    std::vector<std::vector<double>> M(3, std::vector<double>(3));
-    for (std::size_t i = 0; i < 3; i++)
-    {
-        for (size_t j = 0; j < 3; j++)
-        {
-            M[i][j] = (square / 12) - (1 - EPSILON) * weight;
-        }
-    }
-    return M;
+    E *= square / 12;
+    return E - M;
 }
 
-std::vector<double> FredholmSolver::createLocalVector(Element p_element) {
-    double element = SIGMA_0 * EPSILON * pow(THETA, 4) * p_element.getSquare() / 3;
-    std::vector<double> res({ element, element, element });
+vector<double> FredholmSolver::createLocalVector(Element p_element) {
+    double element = SIGMA_0 * EPSILON  * p_element.getSquare() / 3;
+    std::vector<Node> nodes({ p_element.iNode(), p_element.jNode(), p_element.kNode()});
+    vector<double> res(3);
+    for (size_t i = 0; i < res.size(); i++)
+    {
+        double x = nodes[i].x();
+        double y = nodes[i].y();
+        res[i] = element * pow(theta(x,y), 4);
+    }
     return res;
 }
 
 void FredholmSolver::assembleGlobalSystem() {
+    std::cout << "Assembling global system..." << std::endl;
     const int SIZE = mesh.nodes.size();
-    std::vector<std::vector<double>> G(SIZE, std::vector<double>(SIZE));
-    for (auto& row : G) {
-        for (auto& col : row) {
-            col = 0;
-        }
-    }
-    std::vector<double> H(SIZE);
-    std::fill(H.begin(), H.end(), 0);
+    matrix<double> G = zero_matrix<double>(SIZE,SIZE);
+    vector<double> H = zero_vector<double>(SIZE);
     std::for_each(mesh.elements.begin(), mesh.elements.end(), [&](Element element) {
-        std::vector<std::size_t> IDs({ element.i_globalID, element.j_globalID, element.k_globalID });
-        std::vector<std::vector<double>> M = createLocalMatrix(element);
-        std::vector<double> F = createLocalVector(element);
+        std::vector<std::size_t> IDs({ element.iGlobalID(), element.jGlobalID(), element.kGlobalID()});
+        matrix<double> M = createLocalMatrix(element);
+        vector<double> F = createLocalVector(element);
         for (size_t i = 0; i < 3; i++)
         {
             std::size_t i_global = IDs[i];
@@ -68,7 +88,7 @@ void FredholmSolver::assembleGlobalSystem() {
             for (size_t j = 0; j < 3; j++)
             {
                 std::size_t j_global = IDs[j];
-                G[i_global][j_global] += M[i][j];
+                G(i_global, j_global) += M(i, j);
             }
         }
     });
@@ -76,86 +96,28 @@ void FredholmSolver::assembleGlobalSystem() {
     global_matrix = G;
 }
 
-double FredholmSolver::scalarProduction(std::vector<double> left, std::vector<double> right) {
-    double res = 0;
-    if (left.size() == right.size()) {
-        int size = left.size();
-        for (int i = 0; i < size; i++)
-        {
-            res += left[i] * right[i];
-        }
-    }
-    return res;
-}
-
-std::vector<double> FredholmSolver::vectorAdd(std::vector<double> left, std::vector<double> right) {
-    std::vector<double> res;
-    if (left.size() == right.size()) {
-        int size = left.size();
-        for (int i = 0; i < size; i++)
-        {
-            res.push_back(left[i] + right[i]);
-        }
-    }
-    return res;
-}
-
-std::vector<double> FredholmSolver::vectorSubtract(std::vector<double> left, std::vector<double> right) {
-    std::vector<double> res;
-    if (left.size() == right.size()) {
-        int size = left.size();
-        for (int i = 0; i < size; i++)
-        {
-            res.push_back(left[i] - right[i]);
-        }
-    }
-    return res;
-}
-
-std::vector<double> FredholmSolver::vectorNumberProduction(double num, std::vector<double> op) {
-    for (auto& el : op)
-    {
-        el *= num;
-    } 
-    return op;
-}
-
-std::vector<double> FredholmSolver::matrixVectorProduction(std::vector<std::vector<double>> mat, std::vector<double> vec) {
-    const int SIZE = vec.size();
-    std::vector<double> res(SIZE);
-    std::fill(res.begin(), res.end(), 0);
-    for (int i = 0; i < SIZE; i++)
-    {
-        for (int j = 0; j < SIZE; j++)
-        {
-            res[i] += mat[i][j] * vec[j];
-        }
-    }
-    return res;
-}
 
 void FredholmSolver::solveGlobalSystem() {
-    const double EPS = 1e-5;
-    const int SIZE = global_vector.size();
-    std::vector<double> x(SIZE);
-    std::fill(x.begin(), x.end(), 0);
-    std::vector<double> r = global_vector;
-    std::vector<double> p = r;
-    double rSquare = scalarProduction(r, r);
+    std::cout << "Solving global system..." << std::endl;
+    const double EPS = 1e-15;
+    vector<double> x = zero_vector<double>(global_matrix.size1());
+    vector<double> r = global_vector - prec_prod(global_matrix, x);
+    vector<double> p = r;
+    double rSquare = inner_prod(r, r);
     int numIter = 0;
     while (rSquare > EPS)
     {
         numIter++;
-        std::vector<double> temp = matrixVectorProduction(global_matrix, p);
-        double alpha = rSquare / scalarProduction(temp, p);
-        x = vectorAdd(x, vectorNumberProduction(alpha, p));
+        vector<double> temp = prec_prod(global_matrix, p);
+        double alpha = rSquare / inner_prod(temp, p);
+        x = x + alpha * p;
 
-        std::vector<double> rNew = vectorSubtract(r, vectorNumberProduction(alpha, temp));
-        double rNewSquare = scalarProduction(rNew, rNew);
+        vector<double> rNew = r - alpha * temp;
+        double rNewSquare = inner_prod(rNew, rNew);
         double beta = rNewSquare / rSquare;
         r = rNew;
         rSquare = rNewSquare;
-        p = vectorAdd(r, vectorNumberProduction(beta,p));
+        p = r + beta * p;
     }
     std::cout << "Number of iterations: " << numIter << std::endl;
     solution = x;
@@ -165,20 +127,21 @@ void FredholmSolver::printToMV2() {
     std::ofstream out("result.mv2");
     int nodes_size = mesh.nodes.size();
     int elements_size = mesh.elements.size();
-    out << nodes_size << " 3 1 q" << std::endl;
+    out << nodes_size << " 3 2 q theta" << std::endl;
     for (int i = 0; i < nodes_size; ++i)
     {
-        out << (i + 1) << " " << mesh.nodes[i].x << " "
-            << mesh.nodes[i].y << " " << mesh.nodes[i].z << " "
-            << solution[i] << std::endl;
+        out << (i + 1) << " " << mesh.nodes[i].x() << " "
+            << mesh.nodes[i].y() << " " << mesh.nodes[i].z() << " "
+            << solution[i] << " " << theta(mesh.nodes[i].x(), mesh.nodes[i].y()) << std::endl;
     }
 
     out << elements_size << " 3 3 BC_id mat_id mat_id_Out" << std::endl;
     for (int i = 0; i < elements_size; ++i)
     {
-        out << (i + 1) << " " << (mesh.elements[i].i_globalID + 1)
-            << " " << (mesh.elements[i].j_globalID + 1) << " "
-            << (mesh.elements[i].k_globalID + 1) << " "
+        out << (i + 1) << " " << (mesh.elements[i].iGlobalID() + 1)
+            << " " << (mesh.elements[i].jGlobalID() + 1) << " "
+            << (mesh.elements[i].kGlobalID() + 1) << " "
             << 1 << " " << 1 << " " << 0 << std::endl;
     }
+    out.close();
 }

@@ -1,141 +1,212 @@
 #include "Data.h"
 
-Point3D::Point3D() : x(0), y(0), z(0) {};
+// Point3D
 
-Point3D::Point3D(double p_x, double p_y, double p_z) : x(p_x), y(p_y), z(p_z) {};
+Point3D::Point3D() : m_x(0), m_y(0), m_z(0) {};
+
+Point3D::Point3D(double p_x, double p_y, double p_z) : m_x(p_x), m_y(p_y), m_z(p_z) {};
 
 Point3D::Point3D(const Point3D& p_point) {
-	x = p_point.x;
-	y = p_point.y;
-	z = p_point.z;
+	this->m_x = p_point.m_x;
+	this->m_y = p_point.m_y;
+	this->m_z = p_point.m_z;
+}
+
+const Point3D& Point3D::operator=(const Point3D& p_point) {
+	if (this == &p_point) {
+		return *this;
+	}
+	this->m_x = p_point.m_x;
+	this->m_y = p_point.m_y;
+	this->m_z = p_point.m_z;
+	return (*this);
 }
 
 Point3D& Point3D::operator-(const Point3D& p_point) {
-	Point3D res(*this);
-	res.x -= p_point.x;
-	res.y -= p_point.y;
-	res.z -= p_point.z;
-	return res;
+	Point3D l_Res(*this);
+	l_Res.m_x -= p_point.m_x;
+	l_Res.m_y -= p_point.m_y;
+	l_Res.m_z -= p_point.m_z;
+	return l_Res;
 }
 
 double Point3D::operator*(const Point3D& p_point) {
-	return x * p_point.x + y * p_point.y + z * p_point.z;
+	return this->m_x * p_point.m_x + this->m_y * p_point.m_y + this->m_z * p_point.m_z;
+}
+
+double Point3D::x() const {
+	return this->m_x;
+}
+
+double Point3D::y() const {
+	return this->m_y;
+}
+
+double Point3D::z() const {
+	return this->m_z;
 }
 
 double Point3D::getDistance(const Point3D& p_point) {
-	double result = sqrt((x - p_point.x) * (x - p_point.x) + (y - p_point.y) * (y - p_point.y) + (z - p_point.z) * (z - p_point.z));
+	double result = sqrt((this->m_x - p_point.m_x) * (this->m_x - p_point.m_x) 
+					   + (this->m_y - p_point.m_y) * (this->m_y - p_point.m_y)
+		               + (this->m_z - p_point.m_z) * (this->m_z - p_point.m_z));
 	return result;
 }
 
-std::ostream& operator << (std::ostream& out_stream, const Point3D& point) {
-	out_stream << "[" << point.x << " " << point.y << " " << point.z << "]";
-	return out_stream;
+std::ostream& operator << (std::ostream& p_out, const Point3D& p_point) {
+	p_out << "[" << p_point.m_x << " " << p_point.m_y << " " << p_point.m_z << "]";
+	return p_out;
 }
 
-Node::Node(double p_x, double p_y, double p_z) : x(p_x), y(p_y), z(p_z), globalID(0) {};
 
+// Node
 
-double Node::getDistance(const Node& p_point) {
-	double result = sqrt((x - p_point.x) * (x - p_point.x) + (y - p_point.y) * (y - p_point.y) + (z - p_point.z) * (z - p_point.z));
-	return result;
-}
+Node::Node() : Point3D(0, 0, 0), m_global_ID(0) {};
 
-Node::Node() : x(0), y(0), z(0), globalID(0) {};
+Node::Node(double p_x, double p_y, double p_z) : Point3D(p_x, p_y, p_z), m_global_ID(0) {};
 
-Node::Node(const Node& p_node) {
-	x = p_node.x;
-	y = p_node.y;
-	z = p_node.z;
-	globalID = p_node.globalID;
-}
+Node::Node(Point3D p_point) : Point3D(p_point), m_global_ID(0) {};
+
+Node::Node(const Node& p_node): Point3D(p_node), m_global_ID(p_node.m_global_ID) {}
 
 const Node& Node::operator=(const Node& p_node) {
-	x = p_node.x;
-	y = p_node.y;
-	z = p_node.z;
+	if (this == &p_node) { 
+		return *this; 
+	}
+	Point3D::operator=(p_node);
+	this->m_global_ID = p_node.m_global_ID;
 	return (*this);
+}
+
+Node& Node::operator-(const Node& p_point) {
+	Node l_Res = static_cast<Node>(Point3D::operator-(p_point));
+	return l_Res;
 }
 
 Node::~Node() {}
 
-std::ostream& operator <<(std::ostream& out_stream, const Node& node) {
-	out_stream << "[" << node.x << " " << node.y << " " << node.z << "]";
-	return out_stream;
+std::ostream& operator <<(std::ostream& p_out, const Node& p_node) {
+	p_out << "[" << p_node.x() << " " << p_node.y() << " " << p_node.z() << "]";
+	return p_out;
+}
+
+void Node::setGlobalID(std::size_t p_id) {
+	this->m_global_ID = p_id;
 }
 
 
-Element::Element() : i_globalID(0), j_globalID(0), k_globalID(0) {
-	i_node = Node();
-	j_node = Node();
-	k_node = Node();
+// Element
+
+Element::Element() : m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0) {
+	this->m_i_node = Node();
+	this->m_j_node = Node();
+	this->m_k_node = Node();
 }
 
-Element::Element(Node p_i_node, Node p_j_node, Node p_k_node): i_node(p_i_node), j_node(p_j_node), k_node(p_k_node), 
-i_globalID(0), j_globalID(0), k_globalID(0) 
+Element::Element(Node p_i_node, Node p_j_node, Node p_k_node) : m_i_node(p_i_node), m_j_node(p_j_node), m_k_node(p_k_node),
+m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0)
 {
-	i_node = p_i_node;
-	j_node = p_j_node;
-	k_node = p_k_node;
+	this->m_i_node = p_i_node;
+	this->m_j_node = p_j_node;
+	this->m_k_node = p_k_node;
 };
 
 Element::Element(const Element& p_element) {
-	i_node = p_element.i_node;
-	j_node = p_element.j_node;
-	k_node = p_element.k_node;
-	i_globalID = p_element.i_globalID;
-	j_globalID = p_element.j_globalID;
-	k_globalID = p_element.k_globalID;
+	this->m_i_node = p_element.m_i_node;
+	this->m_j_node = p_element.m_j_node;
+	this->m_k_node = p_element.m_k_node;
+	this->m_i_global_ID = p_element.m_i_global_ID;
+	this->m_j_global_ID = p_element.m_j_global_ID;
+	this->m_k_global_ID = p_element.m_k_global_ID;
 }
 
 const Element& Element::operator=(const Element& p_element) {
-	i_node = p_element.i_node;
-	j_node = p_element.j_node;
-	k_node = p_element.k_node;
-	i_globalID = p_element.i_globalID;
-	j_globalID = p_element.j_globalID;
-	k_globalID = p_element.k_globalID;
+	if (this == &p_element) {
+		return *this;
+	}
+	this->m_i_node = p_element.m_i_node;
+	this->m_j_node = p_element.m_j_node;
+	this->m_k_node = p_element.m_k_node;
+	this->m_i_global_ID = p_element.m_i_global_ID;
+	this->m_j_global_ID = p_element.m_j_global_ID;
+	this->m_k_global_ID = p_element.m_k_global_ID;
 	return (*this);
 }
 
-std::ostream& operator <<(std::ostream& out_stream, const Element& element) {
-	out_stream << "[" << element.i_globalID << ":" <<  element.i_node << " " << element.j_globalID << ":" << element.j_node << " " << element.k_globalID << ":" << element.k_node << "]";
-	return out_stream;
+std::ostream& operator <<(std::ostream& p_out, const Element& p_element) {
+	p_out << "[" << p_element.m_i_global_ID << ":" << p_element.iNode() << " "
+		<< p_element.m_j_global_ID << ":" << p_element.jNode() << " "
+		<< p_element.m_k_global_ID << ":" << p_element.kNode() << "]";
+	return p_out;
 }
 
 bool Element::operator==(const Element& p_element) const {
-	bool x_condition = i_node.x == p_element.i_node.x && j_node.x == p_element.j_node.x && k_node.x == p_element.k_node.x;
-	bool y_condition = i_node.y == p_element.i_node.y && j_node.y == p_element.j_node.y && k_node.y == p_element.k_node.y;
-	bool z_condition = i_node.z == p_element.i_node.z && j_node.z == p_element.j_node.z && k_node.z == p_element.k_node.z;
+	bool x_condition = this->m_i_node.x() == p_element.m_i_node.x() &&
+		this->m_j_node.x() == p_element.m_j_node.x() &&
+		this->m_k_node.x() == p_element.m_k_node.x();
+	bool y_condition = this->m_i_node.y() == p_element.m_i_node.y() &&
+		this->m_j_node.y() == p_element.m_j_node.y() &&
+		this->m_k_node.y() == p_element.m_k_node.y();
+	bool z_condition = this->m_i_node.z() == p_element.m_i_node.z() &&
+		this->m_j_node.z() == p_element.m_j_node.z() &&
+		this->m_k_node.z() == p_element.m_k_node.z();
 	return x_condition && y_condition && z_condition;
  }
 
-void Element::setGlobalIDs(std::size_t i, std::size_t j, std::size_t k) {
-	i_globalID = i;
-	j_globalID = j;
-	k_globalID = k;
+void Element::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID) {
+	this->m_i_global_ID = p_i_ID;
+	this->m_j_global_ID = p_j_ID;
+	this->m_k_global_ID = p_k_ID;
+}
+
+Node Element::iNode() const {
+	return this->m_i_node;
+}
+
+Node Element::jNode() const {
+	return this->m_j_node;
+}
+
+Node Element::kNode() const {
+	return this->m_k_node;
+}
+
+std::size_t Element::iGlobalID() const {
+	return this->m_i_global_ID;
+}
+
+std::size_t Element::jGlobalID() const {
+	return this->m_j_global_ID;
+}
+
+std::size_t Element::kGlobalID() const {
+	return this->m_k_global_ID;
 }
 
 Point3D Element::getCenter() {
-	double x = (i_node.x + j_node.x + k_node.x) / 3;
-	double y = (i_node.y + j_node.y + k_node.y) / 3;
-	double z = (i_node.z + j_node.z + k_node.z) / 3;
+	double x = (this->m_i_node.x() + this->m_j_node.x() + this->m_k_node.x()) / 3;
+	double y = (this->m_i_node.y() + this->m_j_node.y() + this->m_k_node.y()) / 3;
+	double z = (this->m_i_node.z() + this->m_j_node.z() + this->m_k_node.z()) / 3;
 	Point3D res(x, y, z);
 	return res;
 }
 
 double Element::getSquare() {
-	double a = i_node.getDistance(j_node);
-	double b = j_node.getDistance(k_node);
-	double c = k_node.getDistance(i_node);
+	double a = this->m_i_node.getDistance(this->m_j_node);
+	double b = this->m_j_node.getDistance(this->m_k_node);
+	double c = this->m_k_node.getDistance(this->m_i_node);
 	double p = (a + b + c) / 2;
 	double s = sqrt(p * (p - a) * (p - b) * (p - c));
 	return s;
 }
 
 Point3D Element::getNormal() {
-	double nx = (j_node.y - i_node.y) * (k_node.z - i_node.z) - (j_node.z - i_node.z) * (k_node.y - i_node.y);
-	double ny = (j_node.z - i_node.z) * (k_node.x - i_node.x) - (j_node.x - i_node.x) * (j_node.z - i_node.z);
-	double nz = (j_node.x - i_node.x) * (k_node.y - i_node.y) - (j_node.y - i_node.y) * (k_node.x - i_node.x);
+	double nx = (this->m_j_node.y() - this->m_i_node.y()) * (this->m_k_node.z() - this->m_i_node.z()) -
+		        (this->m_j_node.z() - this->m_i_node.z()) * (this->m_k_node.y() - this->m_i_node.y());
+	double ny = (this->m_j_node.z() - this->m_i_node.z()) * (this->m_k_node.x() - this->m_i_node.x()) - 
+		        (this->m_j_node.x() - this->m_i_node.x()) * (this->m_j_node.z() - this->m_i_node.z());
+	double nz = (this->m_j_node.x() - this->m_i_node.x()) * (this->m_k_node.y() - this->m_i_node.y()) - 
+		        (this->m_j_node.y() - this->m_i_node.y()) * (this->m_k_node.x() - this->m_i_node.x());
 	Point3D res(nx, ny, nz);
 	return res;
 }

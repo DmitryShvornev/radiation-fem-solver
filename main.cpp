@@ -32,5 +32,6 @@ int main()
     solver.assembleGlobalSystem();
     solver.solveGlobalSystem();
     solver.printToMV2();
+    
 }
 
