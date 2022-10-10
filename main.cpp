@@ -12,7 +12,7 @@
 int main()
 {
     gmsh::initialize();
-    gmsh::open("mesh_final.msh");
+    gmsh::open("mesh_coarse.msh");
     std::vector<double> coords;
     std::vector<double> param_coords;
     std::vector<std::size_t> tags;
@@ -28,9 +28,12 @@ int main()
     gmsh::finalize();
     MeshAdapter adapter(coords, tags, node_tags);
     Mesh msh = adapter.adaptMesh();
-    FredholmSolver solver(msh);
+    FredholmSolver solver(msh, 0.7);
+    double start = omp_get_wtime();
     solver.assembleGlobalSystem();
     solver.solveGlobalSystem();
+    double end = omp_get_wtime();
+    std::cout << "Elapsed time: " << end - start << std::endl;
     solver.printToMV2();
     
 }

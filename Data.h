@@ -31,7 +31,8 @@ public:
 	Node(Point3D p_point);
 	Node(const Node& p_node);
 	const Node& operator=(const Node& p_node);
-	Node& operator-(const Node& p_point);
+	Node& operator-(const Node& p_node);
+	bool operator ==(const Node& p_node) const;
 	friend std::ostream& operator<<(std::ostream&, Node&);
 	void setGlobalID(std::size_t p_id);
 	~Node();
@@ -62,12 +63,15 @@ public:
 };
 
 class Mesh {
+private:
+	std::vector<Node> m_nodes;
+	std::vector<Element> m_elements;
 public:
 	Mesh() {};
 	Mesh(std::vector<Node> p_nodes, std::vector<Element> p_elements);
 	Mesh(const Mesh& p_mesh);
 	const Mesh& operator=(const Mesh& p_mesh);
-	std::vector<Node> nodes;
-	std::vector<Element> elements;
+	std::vector<Node> nodes() const;
+	std::vector<Element> elements() const;
 	~Mesh() {};
 };

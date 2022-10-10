@@ -2,22 +2,27 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-#include <map>
+#include <omp.h>
 #include "Data.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
 
 using namespace boost::numeric::ublas;
 
+// постоянная Стефана - Больцмана
+const double SIGMA_0 = 5.67 * pow(10, -8);
+
+const double pi = 3.14159265358979323846;
+
 class FredholmSolver {
+private:
+	Mesh m_mesh;
+	double m_epsilon;
+	vector<double> m_global_vector;
+	matrix<double> m_global_matrix;
+	vector<double> m_solution;
 public:
-	Mesh mesh;
-	vector<double> global_vector;
-	matrix<double> global_matrix;
-	vector<double> solution;
-	FredholmSolver(const Mesh p_mesh);
+	FredholmSolver(const Mesh p_mesh, const double p_epsilon);
 	matrix<double> createLocalMatrix(Element p_element);
 	vector<double> createLocalVector(Element p_element);
 	void assembleGlobalSystem();

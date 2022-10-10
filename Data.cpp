@@ -78,9 +78,13 @@ const Node& Node::operator=(const Node& p_node) {
 	return (*this);
 }
 
-Node& Node::operator-(const Node& p_point) {
-	Node l_Res = static_cast<Node>(Point3D::operator-(p_point));
+Node& Node::operator-(const Node& p_node) {
+	Node l_Res = static_cast<Node>(Point3D::operator-(p_node));
 	return l_Res;
+}
+
+bool Node::operator==(const Node& p_node) const {
+	return this->x() == p_node.x() && this->y() == p_node.y() && this->z() == p_node.z();
 }
 
 Node::~Node() {}
@@ -141,16 +145,10 @@ std::ostream& operator <<(std::ostream& p_out, const Element& p_element) {
 }
 
 bool Element::operator==(const Element& p_element) const {
-	bool x_condition = this->m_i_node.x() == p_element.m_i_node.x() &&
-		this->m_j_node.x() == p_element.m_j_node.x() &&
-		this->m_k_node.x() == p_element.m_k_node.x();
-	bool y_condition = this->m_i_node.y() == p_element.m_i_node.y() &&
-		this->m_j_node.y() == p_element.m_j_node.y() &&
-		this->m_k_node.y() == p_element.m_k_node.y();
-	bool z_condition = this->m_i_node.z() == p_element.m_i_node.z() &&
-		this->m_j_node.z() == p_element.m_j_node.z() &&
-		this->m_k_node.z() == p_element.m_k_node.z();
-	return x_condition && y_condition && z_condition;
+	bool i_condition = this->m_i_node == p_element.m_i_node;
+	bool j_condition = this->m_j_node == p_element.m_j_node;
+	bool k_condition = this->m_k_node == p_element.m_k_node;
+	return i_condition && j_condition && k_condition;
  }
 
 void Element::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID) {
@@ -201,30 +199,47 @@ double Element::getSquare() {
 }
 
 Point3D Element::getNormal() {
-	double nx = (this->m_j_node.y() - this->m_i_node.y()) * (this->m_k_node.z() - this->m_i_node.z()) -
-		        (this->m_j_node.z() - this->m_i_node.z()) * (this->m_k_node.y() - this->m_i_node.y());
-	double ny = (this->m_j_node.z() - this->m_i_node.z()) * (this->m_k_node.x() - this->m_i_node.x()) - 
-		        (this->m_j_node.x() - this->m_i_node.x()) * (this->m_j_node.z() - this->m_i_node.z());
-	double nz = (this->m_j_node.x() - this->m_i_node.x()) * (this->m_k_node.y() - this->m_i_node.y()) - 
-		        (this->m_j_node.y() - this->m_i_node.y()) * (this->m_k_node.x() - this->m_i_node.x());
+	Point3D v1 = this->m_j_node - this->m_i_node;
+	Point3D v2 = this->m_k_node - this->m_i_node;
+	double nx = v1.y() * v2.z() - v2.y() * v1.z();
+	double ny = -(v1.x() * v2.z() - v2.x() * v1.z());
+	double nz = v1.x() * v2.y() - v2.x() * v1.y();
+	double d = sqrt(nx * nx + ny * ny + nz * nz);
+	nx /= d;
+	ny /= d;
+	nz /= d;
 	Point3D res(nx, ny, nz);
 	return res;
 }
 
 Element::~Element() {}
 
+
+// Mesh
+
 Mesh::Mesh(std::vector<Node> p_nodes, std::vector<Element> p_elements) {
-	std::copy(p_nodes.begin(), p_nodes.end(), std::back_inserter(nodes));
-	std::copy(p_elements.begin(), p_elements.end(), std::back_inserter(elements));
+	std::copy(p_nodes.begin(), p_nodes.end(), std::back_inserter(m_nodes));
+	std::copy(p_elements.begin(), p_elements.end(), std::back_inserter(m_elements));
 }
 
 Mesh::Mesh(const Mesh& p_mesh) {
-	std::copy(p_mesh.nodes.begin(), p_mesh.nodes.end(), std::back_inserter(nodes));
-	std::copy(p_mesh.elements.begin(), p_mesh.elements.end(), std::back_inserter(elements));
+	std::copy(p_mesh.m_nodes.begin(), p_mesh.m_nodes.end(), std::back_inserter(m_nodes));
+	std::copy(p_mesh.m_elements.begin(), p_mesh.m_elements.end(), std::back_inserter(m_elements));
 }
 
 const Mesh& Mesh::operator=(const Mesh& p_mesh) {
-	std::copy(p_mesh.nodes.begin(), p_mesh.nodes.end(), std::back_inserter(nodes));
-	std::copy(p_mesh.elements.begin(), p_mesh.elements.end(), std::back_inserter(elements));
+	if (this == &p_mesh) {
+		return (*this);
+	}
+	std::copy(p_mesh.m_nodes.begin(), p_mesh.m_nodes.end(), std::back_inserter(m_nodes));
+	std::copy(p_mesh.m_elements.begin(), p_mesh.m_elements.end(), std::back_inserter(m_elements));
 	return (*this);
+}
+
+std::vector<Node> Mesh::nodes() const {
+	return this->m_nodes;
+}
+
+std::vector<Element> Mesh::elements() const {
+	return this->m_elements;
 }

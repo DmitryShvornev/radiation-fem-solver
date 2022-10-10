@@ -1,30 +1,32 @@
 #include "MeshAdapter.h"
 
-MeshAdapter::MeshAdapter(const std::vector<double> p_coords, const std::vector<std::size_t> p_nodes_tags, const std::vector<std::vector<std::size_t>> p_elements_to_nodes_tags) {
-	std::copy(p_coords.begin(), p_coords.end(), std::back_inserter(coords));
+MeshAdapter::MeshAdapter(const std::vector<double> p_coords, 
+	                     const std::vector<std::size_t> p_nodes_tags, 
+	                     const std::vector<std::vector<std::size_t>> p_elements_to_nodes_tags) {
+	std::copy(p_coords.begin(), p_coords.end(), std::back_inserter(m_coords));
 	std::copy(p_nodes_tags.begin(), p_nodes_tags.end(),
-		std::back_inserter(nodes_tags));
+		std::back_inserter(m_nodes_tags));
 	std::copy(p_elements_to_nodes_tags.begin(), p_elements_to_nodes_tags.end(),
-		std::back_inserter(elements_to_nodes_tags));
+		std::back_inserter(m_elements_to_nodes_tags));
 };
 
 Mesh MeshAdapter::adaptMesh() {
 	std::cout << "Mesh preprocessing..." << std::endl;
-	std::size_t nodes_number = nodes_tags.size();
+	std::size_t nodes_number = m_nodes_tags.size();
 	std::vector<std::size_t> new_nodes_tags(nodes_number);
 	std::iota(new_nodes_tags.begin(), new_nodes_tags.end(), 0);
 	std::map<std::size_t, std::size_t> tagsMap;
-	std::transform(nodes_tags.begin(), nodes_tags.end(), new_nodes_tags.begin(),
+	std::transform(m_nodes_tags.begin(), m_nodes_tags.end(), new_nodes_tags.begin(),
 		std::inserter(tagsMap, tagsMap.end()), std::make_pair<std::size_t const&, std::size_t const&>);
 
 	std::vector<Node> mesh_nodes;
-	for (std::size_t i = 2; i < coords.size(); i += 3)
+	for (std::size_t i = 2; i < m_coords.size(); i += 3)
 	{
-		Node temp = Node(coords[i - 2], coords[i - 1], coords[i]);
+		Node temp = Node(m_coords[i - 2], m_coords[i - 1], m_coords[i]);
 		mesh_nodes.push_back(temp);
 	}
 	std::vector<std::size_t> result_elements_tags;
-	std::for_each(elements_to_nodes_tags.begin(), elements_to_nodes_tags.end(), [&](std::vector<std::size_t> element) {
+	std::for_each(m_elements_to_nodes_tags.begin(), m_elements_to_nodes_tags.end(), [&](std::vector<std::size_t> element) {
 		for (auto node_tag : element) {
 			result_elements_tags.push_back(tagsMap[node_tag]);
 		}
