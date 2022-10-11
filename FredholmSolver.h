@@ -23,9 +23,22 @@ private:
 	vector<double> m_solution;
 public:
 	FredholmSolver(const Mesh p_mesh, const double p_epsilon);
+	class IncorrectEmissivityException : public std::exception {
+		std::string m_message;
+	public:
+		IncorrectEmissivityException(double p_emissivity) {
+			m_message.assign("FATAL ERROR: Incorrect emissivity value " +
+				std::to_string(p_emissivity) + " is not in range [0,1]");
+		}
+
+		const char* what() const {
+			return m_message.c_str();
+		}
+	};
 	matrix<double> createLocalMatrix(Element p_element);
 	vector<double> createLocalVector(Element p_element);
 	void assembleGlobalSystem();
 	void solveGlobalSystem(); 
 	void printToMV2();
+	~FredholmSolver() {};
 };

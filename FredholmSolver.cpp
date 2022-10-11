@@ -8,6 +8,9 @@ double theta(double x, double y) {
 
 FredholmSolver::FredholmSolver(const Mesh p_mesh, const double p_epsilon) {
     this->m_mesh = p_mesh;
+    if (p_epsilon < 0 || p_epsilon > 1) {
+        throw IncorrectEmissivityException(p_epsilon);
+    }
     this->m_epsilon = p_epsilon;
 }
 
