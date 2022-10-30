@@ -1,5 +1,4 @@
 #include "FredholmSolver.h"
-#include <cmath>
 
 
 double theta(double x, double y) {
@@ -64,7 +63,7 @@ vector<double> FredholmSolver::createLocalVector(Element p_element) {
     std::vector<Node> nodes({ p_element.iNode(), p_element.jNode(), p_element.kNode()});
     vector<double> res(3);
     double x, y;
-    for (size_t i = 0; i < res.size(); i++)
+    for (unsigned i = 0; i < res.size(); i++)
     {
         x = nodes[i].x();
         y = nodes[i].y();
@@ -76,24 +75,27 @@ vector<double> FredholmSolver::createLocalVector(Element p_element) {
 void FredholmSolver::assembleGlobalSystem() {
     std::cout << "Assembling global system..." << std::endl;
     const int SIZE = this->m_mesh.nodes().size();
-    matrix<double> G = zero_matrix<double>(SIZE,SIZE);
+    const int nonZero = this->m_mesh.elements().size() * 9;
+    const int elementsSize = this->m_mesh.elements().size();
+    mapped_matrix<double> G(SIZE,SIZE, nonZero);
     vector<double> H = zero_vector<double>(SIZE);
     std::vector<Element> elements = this->m_mesh.elements();
     int i;
 #pragma omp parallel for private(i)
-    for (i = 0; i < elements.size(); i++)
+    for (i = 0; i < elementsSize; i++)
     {
         std::vector<std::size_t> IDs({ elements[i].iGlobalID(), elements[i].jGlobalID(), elements[i].kGlobalID()});
         matrix<double> M = createLocalMatrix(elements[i]);
         vector<double> F = createLocalVector(elements[i]);
-        for (size_t i = 0; i < 3; i++)
+        int j, k, i_global, j_global;
+        for (j = 0; j < 3; j++)
         {
-            std::size_t i_global = IDs[i];
-            H[i_global] += F[i];
-            for (size_t j = 0; j < 3; j++)
+            i_global = IDs[j];
+            H[i_global] += F[j];
+            for (k = 0; k < 3; k++)
             {
-                std::size_t j_global = IDs[j];
-                G(i_global, j_global) += M(i, j);
+                j_global = IDs[k];
+                G(i_global, j_global) += M(j, k);
             }
         }
     }

@@ -12,7 +12,7 @@
 int main()
 {
     gmsh::initialize();
-    gmsh::open("mesh_coarse.msh");
+    gmsh::open("mesh_shallow.msh");
     std::vector<double> coords;
     std::vector<double> param_coords;
     std::vector<std::size_t> tags;

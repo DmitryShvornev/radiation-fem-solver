@@ -6,6 +6,8 @@
 #include "Data.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <cmath>
+#include <boost/numeric/ublas/matrix_sparse.hpp>
 
 using namespace boost::numeric::ublas;
 

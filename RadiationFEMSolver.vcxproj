@@ -152,14 +152,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CSRMatrix.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="FredholmSolver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshAdapter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CSRMatrix.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="FredholmSolver.h" />
     <ClInclude Include="MeshAdapter.h" />
