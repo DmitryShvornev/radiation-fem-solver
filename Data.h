@@ -38,40 +38,57 @@ public:
 	~Node();
 };
 
-class Element {
+class Element2D {
 private:
 	Node m_i_node, m_j_node, m_k_node;
 	std::size_t m_i_global_ID, m_j_global_ID, m_k_global_ID;
 public:
-	Element();
-	Element(Node p_i_node, Node p_j_node, Node p_k_node);
-	Element(const Element& p_element);
-	const Element& operator=(const Element& p_element);
-	friend std::ostream& operator<<(std::ostream&, const Element&);
-	bool operator ==(const Element& p_element) const;
+	Element2D();
+	Element2D(Node p_i_node, Node p_j_node, Node p_k_node);
+	Element2D(const Element2D& p_element);
+	const Element2D& operator=(const Element2D& p_element);
+	friend std::ostream& operator<<(std::ostream&, const Element2D&);
+	bool operator ==(const Element2D& p_element) const;
 	void setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID);
-	Node iNode() const;
-	Node jNode() const;
-	Node kNode() const;
-	std::size_t iGlobalID() const;
-	std::size_t jGlobalID() const;
-	std::size_t kGlobalID() const;
+	virtual Node iNode() const;
+	virtual Node jNode() const;
+	virtual Node kNode() const;
+	virtual std::size_t iGlobalID() const;
+	virtual std::size_t jGlobalID() const;
+	virtual std::size_t kGlobalID() const;
 	Point3D getCenter();
 	double getSquare();
 	Point3D getNormal();
-	~Element();
+	~Element2D() {};
 };
 
+class Element3D : public Element2D {
+private:
+	Node m_l_node;
+	std::size_t m_l_global_ID;
+public:
+	Element3D();
+	Element3D(Node p_i_node, Node p_j_node, Node p_k_node, Node p_l_node);
+	Element3D(const Element3D& p_element);
+	const Element3D& operator=(const Element3D& p_element);
+	friend std::ostream& operator<<(std::ostream&, const Element3D&);
+	bool operator ==(const Element3D& p_element) const;
+	Node lNode() const;
+	std::size_t lGlobalID() const;
+	~Element3D() {};
+};
+
+template <class __ElementType>
 class Mesh {
 private:
 	std::vector<Node> m_nodes;
-	std::vector<Element> m_elements;
+	std::vector<__ElementType> m_elements;
 public:
 	Mesh() {};
-	Mesh(std::vector<Node> p_nodes, std::vector<Element> p_elements);
+	Mesh(std::vector<Node> p_nodes, std::vector<__ElementType> p_elements);
 	Mesh(const Mesh& p_mesh);
 	const Mesh& operator=(const Mesh& p_mesh);
 	std::vector<Node> nodes() const;
-	std::vector<Element> elements() const;
+	std::vector<__ElementType> elements() const;
 	~Mesh() {};
 };

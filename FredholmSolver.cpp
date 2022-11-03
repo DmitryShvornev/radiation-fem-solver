@@ -5,7 +5,7 @@ double theta(double x, double y) {
     return 476.72*cos(atan(y / x) / 2.29);
 }
 
-FredholmSolver::FredholmSolver(const Mesh p_mesh, const double p_epsilon) {
+FredholmSolver::FredholmSolver(const Mesh<Element2D> p_mesh, const double p_epsilon) {
     this->m_mesh = p_mesh;
     if (p_epsilon < 0 || p_epsilon > 1) {
         throw IncorrectEmissivityException(p_epsilon);
@@ -13,7 +13,7 @@ FredholmSolver::FredholmSolver(const Mesh p_mesh, const double p_epsilon) {
     this->m_epsilon = p_epsilon;
 }
 
-matrix<double> FredholmSolver::createLocalMatrix(Element p_element) {
+matrix<double> FredholmSolver::createLocalMatrix(Element2D p_element) {
     matrix<double> M = zero_matrix<double>(3, 3);
     matrix<double> E = identity_matrix<double>(3, 3);
     double square = p_element.getSquare();
@@ -25,8 +25,8 @@ matrix<double> FredholmSolver::createLocalMatrix(Element p_element) {
     Point3D n_N;
     int i, j;
     double C_1, C_2, C_3, C_4;
-    std::vector<Element> elements = this->m_mesh.elements();
-    std::for_each(elements.begin(), elements.end(), [&](Element element) {
+    std::vector<Element2D> elements = this->m_mesh.elements();
+    std::for_each(elements.begin(), elements.end(), [&](Element2D element) {
         if (!(element == p_element)) {
             target_center = element.getCenter();
             std::vector<Node> target_nodes({ element.iNode(), element.jNode(), element.kNode()});
@@ -58,7 +58,7 @@ matrix<double> FredholmSolver::createLocalMatrix(Element p_element) {
     return E - M;
 }
 
-vector<double> FredholmSolver::createLocalVector(Element p_element) {
+vector<double> FredholmSolver::createLocalVector(Element2D p_element) {
     double element = SIGMA_0 * this->m_epsilon  * p_element.getSquare() / 3;
     std::vector<Node> nodes({ p_element.iNode(), p_element.jNode(), p_element.kNode()});
     vector<double> res(3);
@@ -79,7 +79,7 @@ void FredholmSolver::assembleGlobalSystem() {
     const int elementsSize = this->m_mesh.elements().size();
     mapped_matrix<double> G(SIZE,SIZE, nonZero);
     vector<double> H = zero_vector<double>(SIZE);
-    std::vector<Element> elements = this->m_mesh.elements();
+    std::vector<Element2D> elements = this->m_mesh.elements();
     int i;
 #pragma omp parallel for private(i)
     for (i = 0; i < elementsSize; i++)
@@ -140,7 +140,7 @@ void FredholmSolver::printToMV2() {
     int nodes_size = this->m_mesh.nodes().size();
     int elements_size = this->m_mesh.elements().size();
     std::vector<Node> nodes = this->m_mesh.nodes();
-    std::vector<Element> elements = this->m_mesh.elements();
+    std::vector<Element2D> elements = this->m_mesh.elements();
     out << nodes_size << " 3 2 q theta" << std::endl;
     for (int i = 0; i < nodes_size; ++i)
     {

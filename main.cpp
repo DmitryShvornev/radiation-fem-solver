@@ -12,7 +12,7 @@
 int main()
 {
     gmsh::initialize();
-    gmsh::open("mesh_shallow.msh");
+    gmsh::open("mesh_coarse.msh");
     std::vector<double> coords;
     std::vector<double> param_coords;
     std::vector<std::size_t> tags;
@@ -26,8 +26,8 @@ int main()
     gmsh::model::mesh::getElements(element_types, element_tags, node_tags);
 
     gmsh::finalize();
-    MeshAdapter adapter(coords, tags, node_tags);
-    Mesh msh = adapter.adaptMesh();
+    MeshAdapter<Element2D> adapter(coords, tags, node_tags);
+    Mesh<Element2D> msh = adapter.adaptMesh();
     FredholmSolver solver(msh, 0.7);
     double start = omp_get_wtime();
     solver.assembleGlobalSystem();

@@ -99,15 +99,15 @@ void Node::setGlobalID(std::size_t p_id) {
 }
 
 
-// Element
+// Element2D
 
-Element::Element() : m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0) {
+Element2D::Element2D() : m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0) {
 	this->m_i_node = Node();
 	this->m_j_node = Node();
 	this->m_k_node = Node();
 }
 
-Element::Element(Node p_i_node, Node p_j_node, Node p_k_node) : m_i_node(p_i_node), m_j_node(p_j_node), m_k_node(p_k_node),
+Element2D::Element2D(Node p_i_node, Node p_j_node, Node p_k_node) : m_i_node(p_i_node), m_j_node(p_j_node), m_k_node(p_k_node),
 m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0)
 {
 	this->m_i_node = p_i_node;
@@ -115,7 +115,7 @@ m_i_global_ID(0), m_j_global_ID(0), m_k_global_ID(0)
 	this->m_k_node = p_k_node;
 };
 
-Element::Element(const Element& p_element) {
+Element2D::Element2D(const Element2D& p_element) {
 	this->m_i_node = p_element.m_i_node;
 	this->m_j_node = p_element.m_j_node;
 	this->m_k_node = p_element.m_k_node;
@@ -124,7 +124,7 @@ Element::Element(const Element& p_element) {
 	this->m_k_global_ID = p_element.m_k_global_ID;
 }
 
-const Element& Element::operator=(const Element& p_element) {
+const Element2D& Element2D::operator=(const Element2D& p_element) {
 	if (this == &p_element) {
 		return *this;
 	}
@@ -137,51 +137,51 @@ const Element& Element::operator=(const Element& p_element) {
 	return (*this);
 }
 
-std::ostream& operator <<(std::ostream& p_out, const Element& p_element) {
+std::ostream& operator <<(std::ostream& p_out, const Element2D& p_element) {
 	p_out << "[" << p_element.m_i_global_ID << ":" << p_element.iNode() << " "
 		<< p_element.m_j_global_ID << ":" << p_element.jNode() << " "
 		<< p_element.m_k_global_ID << ":" << p_element.kNode() << "]";
 	return p_out;
 }
 
-bool Element::operator==(const Element& p_element) const {
+bool Element2D::operator==(const Element2D& p_element) const {
 	bool i_condition = this->m_i_node == p_element.m_i_node;
 	bool j_condition = this->m_j_node == p_element.m_j_node;
 	bool k_condition = this->m_k_node == p_element.m_k_node;
 	return i_condition && j_condition && k_condition;
  }
 
-void Element::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID) {
+void Element2D::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID) {
 	this->m_i_global_ID = p_i_ID;
 	this->m_j_global_ID = p_j_ID;
 	this->m_k_global_ID = p_k_ID;
 }
 
-Node Element::iNode() const {
+Node Element2D::iNode() const {
 	return this->m_i_node;
 }
 
-Node Element::jNode() const {
+Node Element2D::jNode() const {
 	return this->m_j_node;
 }
 
-Node Element::kNode() const {
+Node Element2D::kNode() const {
 	return this->m_k_node;
 }
 
-std::size_t Element::iGlobalID() const {
+std::size_t Element2D::iGlobalID() const {
 	return this->m_i_global_ID;
 }
 
-std::size_t Element::jGlobalID() const {
+std::size_t Element2D::jGlobalID() const {
 	return this->m_j_global_ID;
 }
 
-std::size_t Element::kGlobalID() const {
+std::size_t Element2D::kGlobalID() const {
 	return this->m_k_global_ID;
 }
 
-Point3D Element::getCenter() {
+Point3D Element2D::getCenter() {
 	double x = (this->m_i_node.x() + this->m_j_node.x() + this->m_k_node.x()) / 3;
 	double y = (this->m_i_node.y() + this->m_j_node.y() + this->m_k_node.y()) / 3;
 	double z = (this->m_i_node.z() + this->m_j_node.z() + this->m_k_node.z()) / 3;
@@ -189,7 +189,7 @@ Point3D Element::getCenter() {
 	return res;
 }
 
-double Element::getSquare() {
+double Element2D::getSquare() {
 	double a = this->m_i_node.getDistance(this->m_j_node);
 	double b = this->m_j_node.getDistance(this->m_k_node);
 	double c = this->m_k_node.getDistance(this->m_i_node);
@@ -198,7 +198,7 @@ double Element::getSquare() {
 	return s;
 }
 
-Point3D Element::getNormal() {
+Point3D Element2D::getNormal() {
 	Point3D v1 = this->m_j_node - this->m_i_node;
 	Point3D v2 = this->m_k_node - this->m_i_node;
 	double nx = v1.y() * v2.z() - v2.y() * v1.z();
@@ -212,22 +212,69 @@ Point3D Element::getNormal() {
 	return res;
 }
 
-Element::~Element() {}
+
+// Element3D
+
+Element3D::Element3D() : Element2D(), m_l_global_ID(0) {};
+
+Element3D::Element3D(Node p_i_node, Node p_j_node, Node p_k_node, Node p_l_node) : Element2D(p_i_node, p_j_node, p_k_node),
+m_l_node(p_l_node), m_l_global_ID(0) 
+{
+	this->m_l_node = p_l_node;
+}
+
+Element3D::Element3D(const Element3D& p_element) : Element2D(p_element),
+m_l_node(p_element.m_l_node), m_l_global_ID(p_element.m_l_global_ID) {}
+
+const Element3D& Element3D::operator=(const Element3D& p_element) {
+	if (this == &p_element) {
+		return (*this);
+	}
+	Element2D::operator=(p_element);
+	this->m_l_node = p_element.m_l_node;
+	this->m_l_global_ID = p_element.m_l_global_ID;
+	return (*this);
+}
+
+Node Element3D::lNode() const {
+	return this->m_l_node;
+}
+
+std::size_t Element3D::lGlobalID() const {
+	return this->m_l_global_ID;
+}
+
+std::ostream& operator <<(std::ostream& p_out, const Element3D& p_element) {
+	p_out << "[" << p_element.iGlobalID() << ":" << p_element.iNode() << " "
+		<< p_element.jGlobalID() << ":" << p_element.jNode() << " "
+		<< p_element.kGlobalID() << ":" << p_element.kNode() << ""
+		<< p_element.lGlobalID() << ":" << p_element.lNode() << "";
+	return p_out;
+}
+
+bool Element3D::operator==(const Element3D& p_element) const {
+	return Element2D::operator==(p_element) && p_element.m_l_node == this->m_l_node;
+}
 
 
 // Mesh
 
-Mesh::Mesh(std::vector<Node> p_nodes, std::vector<Element> p_elements) {
+template Mesh<Element2D>; // инстанцируем класс Mesh для типа Element2D (Inclusion Model)
+
+template <class __ElementType>
+Mesh<__ElementType>::Mesh(std::vector<Node> p_nodes, std::vector<__ElementType> p_elements) {
 	std::copy(p_nodes.begin(), p_nodes.end(), std::back_inserter(m_nodes));
 	std::copy(p_elements.begin(), p_elements.end(), std::back_inserter(m_elements));
 }
 
-Mesh::Mesh(const Mesh& p_mesh) {
+template <class __ElementType>
+Mesh<__ElementType>::Mesh(const Mesh<__ElementType>& p_mesh) {
 	std::copy(p_mesh.m_nodes.begin(), p_mesh.m_nodes.end(), std::back_inserter(m_nodes));
 	std::copy(p_mesh.m_elements.begin(), p_mesh.m_elements.end(), std::back_inserter(m_elements));
 }
 
-const Mesh& Mesh::operator=(const Mesh& p_mesh) {
+template <class __ElementType>
+const Mesh<__ElementType>& Mesh<__ElementType>::operator=(const Mesh<__ElementType>& p_mesh) {
 	if (this == &p_mesh) {
 		return (*this);
 	}
@@ -236,10 +283,12 @@ const Mesh& Mesh::operator=(const Mesh& p_mesh) {
 	return (*this);
 }
 
-std::vector<Node> Mesh::nodes() const {
+template <class __ElementType>
+std::vector<Node> Mesh<__ElementType>::nodes() const {
 	return this->m_nodes;
 }
 
-std::vector<Element> Mesh::elements() const {
+template <class __ElementType>
+std::vector<__ElementType> Mesh<__ElementType>::elements() const {
 	return this->m_elements;
 }
