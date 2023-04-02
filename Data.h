@@ -3,6 +3,9 @@
 #include <cmath>
 #include <vector>
 #include <iterator>
+#include <boost/numeric/ublas/matrix.hpp>
+
+using namespace boost::numeric::ublas;
 
 class Point3D {
 private:
@@ -73,8 +76,10 @@ public:
 	const Element3D& operator=(const Element3D& p_element);
 	friend std::ostream& operator<<(std::ostream&, const Element3D&);
 	bool operator ==(const Element3D& p_element) const;
+	void setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID, std::size_t p_l_ID);
 	Node lNode() const;
 	std::size_t lGlobalID() const;
+	double getVolume();
 	~Element3D() {};
 };
 

@@ -5,6 +5,12 @@ double theta(double x, double y) {
     return 476.72*cos(atan(y / x) / 2.29);
 }
 
+double theta1(double x, double y) {
+    return 476.72;
+}
+
+const double THETA = 573;
+
 FredholmSolver::FredholmSolver(const Mesh<Element2D> p_mesh, const double p_epsilon) {
     this->m_mesh = p_mesh;
     if (p_epsilon < 0 || p_epsilon > 1) {
@@ -43,7 +49,7 @@ matrix<double> FredholmSolver::createLocalMatrix(Element2D p_element) {
                         C_2 = (r_MN * n_N);
                         C_3 = (square / (12 * pi)) * (1 - this->m_epsilon);
                         C_4 = (r_MN * n_M);
-                        if (C_4 == 0 || C_2 == 0) {
+                        if (C_4 == 0 || C_2 == 0 || r_MN * r_MN == 0) {
                             continue;
                         }
                         else {
@@ -67,7 +73,7 @@ vector<double> FredholmSolver::createLocalVector(Element2D p_element) {
     {
         x = nodes[i].x();
         y = nodes[i].y();
-        res[i] = element * pow(theta(x,y), 4);
+        res[i] = element * pow(theta1(x,y), 4);
     }
     return res;
 }
@@ -81,6 +87,7 @@ void FredholmSolver::assembleGlobalSystem() {
     vector<double> H = zero_vector<double>(SIZE);
     std::vector<Element2D> elements = this->m_mesh.elements();
     int i;
+    omp_set_num_threads(4);
 #pragma omp parallel for private(i)
     for (i = 0; i < elementsSize; i++)
     {
@@ -106,7 +113,7 @@ void FredholmSolver::assembleGlobalSystem() {
 
 void FredholmSolver::solveGlobalSystem() {
     std::cout << "Solving global system..." << std::endl;
-    const double EPS = 1e-15;
+    const double EPS = 1e-25;
     vector<double> x = zero_vector<double>(this->m_global_matrix.size1());
     vector<double> r = this->m_global_vector - prec_prod(this->m_global_matrix, x);
     vector<double> p = r;
@@ -146,7 +153,7 @@ void FredholmSolver::printToMV2() {
     {
         out << (i + 1) << " " << nodes[i].x() << " "
             << nodes[i].y() << " " << nodes[i].z() << " "
-            << this->m_solution[i] << " " << theta(nodes[i].x(), nodes[i].y()) << std::endl;
+            << this->m_solution[i] << " " << theta1(nodes[i].x(), nodes[i].y()) << std::endl;
     }
 
     out << elements_size << " 3 3 BC_id mat_id mat_id_Out" << std::endl;

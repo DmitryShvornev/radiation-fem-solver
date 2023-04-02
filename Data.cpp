@@ -256,10 +256,24 @@ bool Element3D::operator==(const Element3D& p_element) const {
 	return Element2D::operator==(p_element) && p_element.m_l_node == this->m_l_node;
 }
 
+void Element3D::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t p_k_ID, std::size_t p_l_ID) {
+	Element2D::setGlobalIDs(p_i_ID, p_j_ID, p_k_ID);
+	this->m_l_global_ID = p_l_ID;
+}
+
+double Element3D::getVolume() {
+	Point3D v1 = this->jNode() - this->iNode();
+	Point3D v2 = this->kNode() - this->iNode();
+	Point3D v3 = this->lNode() - this->iNode();
+	double res = v1.x() * (v2.y() * v3.z() - v3.y() * v2.z()) - v1.y() * (v2.x() * v3.z() - v3.x()
+		* v2.z()) + v1.z() * (v2.x() * v3.y() - v3.x() * v2.y());
+	return (1 / 6) * abs(res);
+}
 
 // Mesh
 
 template Mesh<Element2D>; // инстанцируем класс Mesh для типа Element2D (Inclusion Model)
+template Mesh<Element3D>;
 
 template <class __ElementType>
 Mesh<__ElementType>::Mesh(std::vector<Node> p_nodes, std::vector<__ElementType> p_elements) {
