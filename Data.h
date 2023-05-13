@@ -4,6 +4,7 @@
 #include <vector>
 #include <iterator>
 #include <boost/numeric/ublas/matrix.hpp>
+#include "MatrixOperations.h"
 
 using namespace boost::numeric::ublas;
 
@@ -80,6 +81,7 @@ public:
 	Node lNode() const;
 	std::size_t lGlobalID() const;
 	double getVolume();
+	matrix<double> getBaricentricCoords();
 	~Element3D() {};
 };
 

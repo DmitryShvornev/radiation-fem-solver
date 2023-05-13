@@ -1,22 +1,14 @@
 #include "FredholmSolver.h"
 
-
-double theta(double x, double y) {
-    return 476.72*cos(atan(y / x) / 2.29);
-}
-
-double theta1(double x, double y) {
-    return 476.72;
-}
-
 const double THETA = 573;
 
-FredholmSolver::FredholmSolver(const Mesh<Element2D> p_mesh, const double p_epsilon) {
+FredholmSolver::FredholmSolver(const Mesh<Element2D> p_mesh, const double p_epsilon, const std::string p_suffix) {
     this->m_mesh = p_mesh;
     if (p_epsilon < 0 || p_epsilon > 1) {
         throw IncorrectEmissivityException(p_epsilon);
     }
     this->m_epsilon = p_epsilon;
+    this->m_suffix = p_suffix;
 }
 
 matrix<double> FredholmSolver::createLocalMatrix(Element2D p_element) {
@@ -38,23 +30,21 @@ matrix<double> FredholmSolver::createLocalMatrix(Element2D p_element) {
             std::vector<Node> target_nodes({ element.iNode(), element.jNode(), element.kNode()});
             target_square = element.getSquare();
             n_N = element.getNormal();
-            if (n_M * n_N < -0.866) {
-                for (i = 0; i < 3; i++)
+            for (i = 0; i < 3; i++)
+            {
+                for (j = 0; j < 3; j++)
                 {
-                    for (j = 0; j < 3; j++)
-                    {
-                        Node temp = current_nodes[i] - target_nodes[j];
-                        Point3D r_MN(temp.x(), temp.y(), temp.z());
-                        C_1 = target_square / (r_MN * r_MN);
-                        C_2 = (r_MN * n_N);
-                        C_3 = (square / (12 * pi)) * (1 - this->m_epsilon);
-                        C_4 = (r_MN * n_M);
-                        if (C_4 == 0 || C_2 == 0 || r_MN * r_MN == 0) {
-                            continue;
-                        }
-                        else {
-                            M(i, j) += C_1 * C_2 * C_3 * C_4;
-                        }
+                    Node temp = current_nodes[i] - target_nodes[j];
+                    Point3D r_MN(temp.x(), temp.y(), temp.z());
+                    C_1 = target_square / (r_MN * r_MN);
+                    C_2 = (r_MN * n_N);
+                    C_3 = (square / (12 * pi)) * (1 - this->m_epsilon);
+                    C_4 = (r_MN * n_M);
+                    if (C_4 == 0 || C_2 == 0 || r_MN * r_MN == 0) {
+                        continue;
+                    }
+                    else {
+                        M(i, j) += C_1 * C_2 * C_3 * C_4;
                     }
                 }
             }
@@ -73,13 +63,17 @@ vector<double> FredholmSolver::createLocalVector(Element2D p_element) {
     {
         x = nodes[i].x();
         y = nodes[i].y();
-        res[i] = element * pow(theta1(x,y), 4);
+        res[i] = element * pow(THETA, 4);
     }
     return res;
 }
 
+vector<double> FredholmSolver::solution() {
+    return this->m_solution;
+}
+
 void FredholmSolver::assembleGlobalSystem() {
-    std::cout << "Assembling global system..." << std::endl;
+    std::cout << "Assembling global Fredholm system..." << std::endl;
     const int SIZE = this->m_mesh.nodes().size();
     const int nonZero = this->m_mesh.elements().size() * 9;
     const int elementsSize = this->m_mesh.elements().size();
@@ -112,8 +106,8 @@ void FredholmSolver::assembleGlobalSystem() {
 
 
 void FredholmSolver::solveGlobalSystem() {
-    std::cout << "Solving global system..." << std::endl;
-    const double EPS = 1e-25;
+    std::cout << "Solving global Fredholm system..." << std::endl;
+    const double EPS = 1e-10;
     vector<double> x = zero_vector<double>(this->m_global_matrix.size1());
     vector<double> r = this->m_global_vector - prec_prod(this->m_global_matrix, x);
     vector<double> p = r;
@@ -137,23 +131,24 @@ void FredholmSolver::solveGlobalSystem() {
         r = rNew;
         rSquare = rNewSquare;
         p = r + beta * p;
+        std::cout << "Discrepancy " << rSquare << std::endl;
     }
     std::cout << "Number of iterations: " << numIter << std::endl;
     this->m_solution = x;
 }
 
 void FredholmSolver::printToMV2() {
-    std::ofstream out("result.mv2");
+    std::ofstream out("result" + this->m_suffix +".mv2");
     int nodes_size = this->m_mesh.nodes().size();
     int elements_size = this->m_mesh.elements().size();
     std::vector<Node> nodes = this->m_mesh.nodes();
     std::vector<Element2D> elements = this->m_mesh.elements();
-    out << nodes_size << " 3 2 q theta" << std::endl;
+    out << nodes_size << " 3 1 q" << std::endl;
     for (int i = 0; i < nodes_size; ++i)
     {
         out << (i + 1) << " " << nodes[i].x() << " "
             << nodes[i].y() << " " << nodes[i].z() << " "
-            << this->m_solution[i] << " " << theta1(nodes[i].x(), nodes[i].y()) << std::endl;
+            << this->m_solution[i] << std::endl;
     }
 
     out << elements_size << " 3 3 BC_id mat_id mat_id_Out" << std::endl;

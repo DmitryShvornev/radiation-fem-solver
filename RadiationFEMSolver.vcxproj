@@ -152,7 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AbstractFEMSolver.cpp" />
+    <ClCompile Include="Application.cpp" />
     <ClCompile Include="ConductivitySolver.cpp" />
     <ClCompile Include="Data.cpp" />
     <ClCompile Include="FredholmSolver.cpp" />
@@ -160,10 +160,11 @@
     <ClCompile Include="MeshAdapter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AbstractFEMSolver.h" />
+    <ClInclude Include="Application.h" />
     <ClInclude Include="ConductivitySolver.h" />
     <ClInclude Include="Data.h" />
     <ClInclude Include="FredholmSolver.h" />
+    <ClInclude Include="MatrixOperations.h" />
     <ClInclude Include="MeshAdapter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

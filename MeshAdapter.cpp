@@ -43,7 +43,7 @@ std::vector<Node> MeshAdapter<Element2D>::filterJSONMeshNodes(std::vector<Node> 
 
 template <>
 Mesh<Element2D> MeshAdapter<Element2D>::adaptJSONMesh() {
-	std::cout << "Mesh preprocessing..." << std::endl;
+	std::cout << "Mesh 2D preprocessing..." << std::endl;
 	std::vector<Node> temp_mesh_nodes;
 	for (auto point : m_mesh_JSON_data["points"]) {
 		Node temp = Node(point[0], point[1], point[2]);
@@ -73,7 +73,7 @@ Mesh<Element2D> MeshAdapter<Element2D>::adaptJSONMesh() {
 
 template <>
 Mesh<Element3D> MeshAdapter<Element3D>::adaptJSONMesh() {
-	std::cout << "Mesh preprocessing..." << std::endl;
+	std::cout << "Mesh 3D preprocessing..." << std::endl;
 	std::vector<Node> mesh_nodes;
 	for (auto point : m_mesh_JSON_data["points"]) {
 		Node temp = Node(point[0], point[1], point[2]);

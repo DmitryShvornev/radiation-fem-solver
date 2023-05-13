@@ -1,29 +1,22 @@
 ﻿// RadiationFEMSolver.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
 //
 
-#include <iostream>
-#include <nlohmann/json.hpp>
-#include <fstream>
-#include <algorithm>
-#include "FredholmSolver.h"
-#include "MeshAdapter.h"
-#include "Data.h"
-
-using json = nlohmann::json;
+#include "Application.h"
 
 
 int main()
 {
-    std::ifstream data_file("all_data.json");
-    json data = json::parse(data_file);
-    MeshAdapter<Element2D> adapter(data);
-    Mesh<Element2D> msh = adapter.adaptJSONMesh();
-    FredholmSolver solver(msh, 0.7);
-    double start = omp_get_wtime();
-    solver.assembleGlobalSystem();
-    solver.solveGlobalSystem();
-    double end = omp_get_wtime();
-    std::cout << "Elapsed time: " << end - start << std::endl;
-    solver.printToMV2();
+    std::string filename1 = "all_data1.json";
+    std::string suffix1 = "1";
+    Application app1(filename1, suffix1);
+    app1.run();
+    /*std::string filename2 = "all_data2.json";
+    std::string suffix2 = "2";
+    Application app2(filename2, suffix2);
+    app2.run();
+    std::string filename3 = "all_data3.json";
+    std::string suffix3 = "3";
+    Application app3(filename3, suffix3);
+    app3.run();*/
 }
 

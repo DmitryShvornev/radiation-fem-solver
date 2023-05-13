@@ -195,6 +195,9 @@ double Element2D::getSquare() {
 	double c = this->m_k_node.getDistance(this->m_i_node);
 	double p = (a + b + c) / 2;
 	double s = sqrt(p * (p - a) * (p - b) * (p - c));
+	if (isnan(s) || isinf(s)) {
+		return 0;
+	}
 	return s;
 }
 
@@ -262,12 +265,35 @@ void Element3D::setGlobalIDs(std::size_t p_i_ID, std::size_t p_j_ID, std::size_t
 }
 
 double Element3D::getVolume() {
-	Point3D v1 = this->jNode() - this->iNode();
-	Point3D v2 = this->kNode() - this->iNode();
-	Point3D v3 = this->lNode() - this->iNode();
-	double res = v1.x() * (v2.y() * v3.z() - v3.y() * v2.z()) - v1.y() * (v2.x() * v3.z() - v3.x()
-		* v2.z()) + v1.z() * (v2.x() * v3.y() - v3.x() * v2.y());
-	return (1 / 6) * abs(res);
+	matrix<double> C(4, 4);
+	std::vector<Node> element_nodes({ this->iNode(), this->jNode(), this->kNode(), this->lNode() });
+	C(0, 0) = 1; C(0, 1) = 1; C(0, 2) = 1; C(0, 3) = 1;
+	for (int i = 0; i < 4; i++)
+	{
+		C(1, i) = element_nodes[i].x();
+		C(2, i) = element_nodes[i].y();
+		C(3, i) = element_nodes[i].z();
+	}
+	double res = fabs(Determinant(C) / 6);
+	if (isnan(res) || isinf(res)) {
+		return 0;
+	}
+	return res;
+}
+
+matrix<double> Element3D::getBaricentricCoords() {
+	matrix<double> C(4, 4);
+	matrix<double> C_res(4, 4);
+	std::vector<Node> element_nodes({ this->iNode(), this->jNode(), this->kNode(), this->lNode()});
+	C(0, 0) = 1; C(0, 1) = 1; C(0, 2) = 1; C(0, 3) = 1;
+	for (int i = 0; i < 4; i++)
+	{
+		C(1, i) = element_nodes[i].x();
+		C(2, i) = element_nodes[i].y();
+		C(3, i) = element_nodes[i].z();
+	}
+	InvertMatrix(C, C_res);
+	return C_res;
 }
 
 // Mesh
