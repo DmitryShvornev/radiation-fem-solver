@@ -38,6 +38,7 @@ public:
 	Node& operator-(const Node& p_node);
 	bool operator ==(const Node& p_node) const;
 	friend std::ostream& operator<<(std::ostream&, Node&);
+	std::size_t getGlobalID();
 	void setGlobalID(std::size_t p_id);
 	~Node();
 };

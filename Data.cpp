@@ -94,6 +94,10 @@ std::ostream& operator <<(std::ostream& p_out, const Node& p_node) {
 	return p_out;
 }
 
+std::size_t Node::getGlobalID() {
+	return this->m_global_ID;
+}
+
 void Node::setGlobalID(std::size_t p_id) {
 	this->m_global_ID = p_id;
 }

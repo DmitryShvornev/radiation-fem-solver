@@ -16,13 +16,12 @@ using json = nlohmann::json;
 
 const int THETA_UP = 873;
 
-const int THETA_DOWN = 293;
+const int THETA_DOWN = 273;
 
-// Материал - Сталь 10
 
-const int LAMBDA = 5;
+const int LAMBDA = 83;
 
-const int ALPHA = 2.5*pow(10,-6);
+const int ALPHA = 11.6*pow(10,-6);
 
 
 class ConductivitySolver {
@@ -37,9 +36,10 @@ class ConductivitySolver {
 	std::set<int> m_theta_down_boundary_nodes;
 	std::map<int, double> m_map_q_previous_solution;
 	std::string m_suffix;
+	bool m_is_with_radiation;
 public:
 	ConductivitySolver() = default;
-	ConductivitySolver(const Mesh<Element3D> p_mesh, const json p_mesh_JSON_data, vector<double> p_q_previous_solution, std::string p_suffix);
+	ConductivitySolver(const Mesh<Element3D> p_mesh, const json p_mesh_JSON_data, vector<double> p_q_previous_solution, std::string p_suffix, bool p_is_with_radiation);
 	void init();
 	bool isOnThetaUp(int p_id);
 	bool isOnThetaDown(int p_id);
@@ -49,6 +49,7 @@ public:
 	vector<double> createLocalVector(Element3D p_element);
 	void assembleGlobalSystem();
 	void solveGlobalSystem();
+	vector<double> calculateThermalFlow();
 	void printToMV2();
 	~ConductivitySolver() {};
 };

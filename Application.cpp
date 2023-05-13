@@ -1,8 +1,9 @@
 #include "Application.h"
 
-Application::Application(std::string p_filename, std::string p_suffix) {
+Application::Application(std::string p_filename, std::string p_suffix, bool p_is_with_radiation) {
 	this->m_filename = p_filename;
     this->m_suffix = p_suffix;
+    this->m_is_with_radiation = p_is_with_radiation;
 }
 
 void Application::run() {
@@ -20,7 +21,7 @@ void Application::run() {
     solver.printToMV2();
     MeshAdapter<Element3D> adapter_3d(data);
     Mesh<Element3D> msh_3d = adapter_3d.adaptJSONMesh();
-    ConductivitySolver solver_3d(msh_3d, data, solver.solution(), this->m_suffix);
+    ConductivitySolver solver_3d(msh_3d, data, solver.solution(), this->m_suffix, this->m_is_with_radiation);
     solver_3d.init();
     start = omp_get_wtime();
     solver_3d.assembleGlobalSystem();

@@ -14,7 +14,8 @@ using json = nlohmann::json;
 class Application {
 	std::string m_filename;
 	std::string m_suffix;
+	bool m_is_with_radiation;
 public:
-	Application(std::string p_filename, std::string p_suffix);
+	Application(std::string p_filename, std::string p_suffix, bool p_is_with_radiation);
 	void run();
 };

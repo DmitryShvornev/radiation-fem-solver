@@ -1,10 +1,11 @@
 #include "ConductivitySolver.h"
 
-ConductivitySolver::ConductivitySolver(const Mesh<Element3D> p_mesh, const json p_mesh_JSON_data, vector<double> p_q_previous_solution, std::string p_suffix) {
+ConductivitySolver::ConductivitySolver(const Mesh<Element3D> p_mesh, const json p_mesh_JSON_data, vector<double> p_q_previous_solution, std::string p_suffix, bool p_is_with_radiation) {
 	this->m_mesh = p_mesh;
     this->m_q_previous_solution = p_q_previous_solution;
     this->m_mesh_JSON_data = p_mesh_JSON_data;
     this->m_suffix = p_suffix;
+    this->m_is_with_radiation = p_is_with_radiation;
 }
 
 void ConductivitySolver::init() {
@@ -144,7 +145,7 @@ vector<double> ConductivitySolver::createLocalVector(Element3D p_element) {
             bcs(i) *= ALPHA * THETA_DOWN * S / 3;
         }
     }
-    if (element_count_q == 3) {
+    if (element_count_q == 3 && this->m_is_with_radiation) {
         Element2D temp(m_mesh.nodes()[surface_ids[0]], m_mesh.nodes()[surface_ids[1]], m_mesh.nodes()[surface_ids[2]]);
         double S = temp.getSquare();
         bcs(1) = 1; bcs(2) = 1; bcs(3) = 1;
@@ -258,18 +259,57 @@ void ConductivitySolver::solveGlobalSystem() {
     this->m_solution = x;
 }
 
+vector<double> ConductivitySolver::calculateThermalFlow() {
+    const int SIZE = this->m_mesh.nodes().size();
+    const int elementsSize = this->m_mesh.elements().size();
+    std::vector<Element3D> elements = this->m_mesh.elements();
+    vector<double> Q = zero_vector<double>(SIZE);
+    for (int i = 0; i < elementsSize; i++)
+    {
+        std::vector<std::size_t> IDs({ elements[i].iGlobalID(), elements[i].jGlobalID(), elements[i].kGlobalID(), elements[i].lGlobalID() });
+        double V = elements[i].getVolume();
+        matrix<double> B = createGradientMatrix(elements[i]);
+        vector<double> T(4);
+        for (int k = 0; k < 4; k++)
+        {
+            int id = IDs[k];
+            T[k] = this->m_solution[id];
+        }
+        vector<double> q_local = prec_prod(B,T);
+        double q_grad = sqrt(q_local[0] * q_local[0] + q_local[1] * q_local[1] + q_local[2] * q_local[2]);
+        int j, i_global;
+        for (j = 0; j < 4; j++)
+        {
+            i_global = IDs[j];
+            if (this->m_is_with_radiation) {
+                if (isOnQ(i_global)) {
+                    Q[i_global] = this->m_map_q_previous_solution[i_global];
+                }
+                else {
+                    Q[i_global] += LAMBDA * q_grad;
+                }
+            }
+            else {
+                Q[i_global] += LAMBDA * q_grad;
+            }
+        }
+    }
+    return Q;
+}
+
 void ConductivitySolver::printToMV2() {
     std::ofstream out("result_3d_" + this->m_suffix +".mv2");
     int nodes_size = this->m_mesh.nodes().size();
     int elements_size = this->m_mesh.elements().size();
     std::vector<Node> nodes = this->m_mesh.nodes();
     std::vector<Element3D> elements = this->m_mesh.elements();
-    out << nodes_size << " 3 1 theta" << std::endl;
+    vector<double> Q = calculateThermalFlow();
+    out << nodes_size << " 3 2 theta q" << std::endl;
     for (int i = 0; i < nodes_size; ++i)
     {
         out << (i + 1) << " " << nodes[i].x() << " "
             << nodes[i].y() << " " << nodes[i].z() << " "
-            << this->m_solution[i] << std::endl;
+            << this->m_solution[i] << " " << Q[i] << std::endl;
     }
 
     out << elements_size << " 3 3 BC_id mat_id mat_id_Out" << std::endl;
